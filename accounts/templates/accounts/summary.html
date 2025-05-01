@@ -1,0 +1,417 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Summary Selection | Health Check{% endblock %}
+{% block extra_style %}
+.summary-main { max-width: 1300px; margin: 48px auto 70px auto; background: #e2f0fb; border-radius: 22px; box-shadow: 0 8px 32px #263c5922; padding: 42px 36px 34px 36px;}
+.summary-title { text-align:center; font-size:2.2em; color:#1465a2; font-weight:700; margin-bottom:34px;}
+.summary-form-row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-bottom: 30px;}
+.summary-dropdown, .summary-input { flex: 1 1 142px; min-width: 142px; max-width: 220px;}
+.summary-dropdown select, .summary-input input { width: 100%; padding: 13px 12px; border-radius: 10px; border: 1.7px solid #bad2ec; background: #f7fafc; font-size: 1.09em;}
+.summary-dropdown select:focus, .summary-input input:focus { border-color: #1a76d2; outline: none;}
+.summary-btn { flex:0 1 144px; padding:13px 0; border:none; border-radius:10px; background:linear-gradient(90deg,#1a76d2 70%,#2186eb 100%); color:#fff; font-weight:600; font-size:1.13em; box-shadow:0 2px 12px #c7e2fa40; cursor:pointer; transition:background 0.14s;}
+.summary-btn:hover { background:#289ff3;}
+.selection-preview-card { margin:32px auto 16px auto; background:#fff; border-radius:13px; box-shadow:0 1px 9px #263c590c; border:1.5px solid #e2e7f3; padding:20px 26px; max-width: 590px;}
+.selection-preview-title { color:#2774ba; font-size:1.13em; font-weight:600; margin-bottom:6px;}
+.selection-preview-content { font-size:1.09em; color:#34425b; min-height: 1.5em;}
+.stats-row { display:flex; gap:28px; flex-wrap:nowrap; justify-content:center; align-items:flex-start;}
+.stats-card { background:#fff; border-radius:13px; box-shadow:0 2px 11px #263c590a; border:1.5px solid #e2e7f3; padding:30px 28px; min-width:360px; max-width:520px; width:100%; margin: 0 0 24px 0; box-sizing: border-box;}
+.stats-title { color:#1a76d2; font-size:1.45em; font-weight:bold; margin-bottom:12px; text-align:center;}
+.stats-table { width: 100%; margin: 0 auto 18px auto; border-collapse: collapse;}
+.stats-table th, .stats-table td { padding: 9px 11px; border-bottom: 1px solid #d2e5f8; font-size: 1.12em;}
+.stats-table th { color:#1465a2; font-weight:600; background:#f4fafd;}
+.stats-table tr:last-child td, .stats-table tr:last-child th { border-bottom: none;}
+.chart-container {width: 100%; max-width: 380px; height: 230px; margin: 18px auto 0 auto; display: flex; justify-content: center; align-items: center; box-sizing: border-box;}
+@media (max-width: 1200px) {
+    .summary-main{max-width: 98vw;}
+    .stats-row{flex-wrap:wrap;}
+    .stats-card{max-width:98vw; min-width:240px;}
+}
+@media (max-width: 900px) {
+    .summary-main{padding:14px 3vw 11px 3vw;}
+    .summary-form-row{flex-direction:column;gap:14px;}
+    .summary-btn{width:100%;margin:0;}
+    .stats-row{flex-direction:column;gap:10px;}
+}
+
+.stats-table th.count-col, .stats-table td.count-col {
+    text-align: right;
+    padding-right: 20px;  /* or adjust as needed */
+}
+{% endblock %}
+
+{% block content %}
+<div style="width:100%; display: flex; justify-content: flex-end; margin-bottom: 18px;">
+    <div style="padding-right:38px; padding-top:38px;">
+        <a href="{% url 'summary_guide' %}" class="summary-btn"
+           style="min-width:130px; padding:17px 38px; font-size:1.17em; font-weight:600; text-align:center; text-decoration:none;">
+            Guide
+        </a>
+    </div>
+</div>
+
+
+<div class="summary-main">
+    <div class="summary-title">Summary Selection Panel</div>
+    <form method="post" id="summaryForm" autocomplete="off">
+        {% csrf_token %}
+        <div class="summary-form-row">
+            <!-- Department Dropdown -->
+            {% if role == "Team Leader" %}
+            <div class="summary-dropdown">
+                <select name="department" id="departmentDropdown" class="form-select" disabled>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" selected>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="department" value="{{ departments.0.id }}">
+            </div>
+            {% elif role == "Department Leader" %}
+            <div class="summary-dropdown">
+                <select name="department" id="departmentDropdown" class="form-select" onchange="onDepartmentChange()">
+                    {% for dept in all_departments %}
+                        <option value="{{ dept.id }}"
+                            {% if selected.department == dept.id|stringformat:"s" %}
+                                selected
+                            {% elif not selected.department and dept.id == user_department_id %}
+                                selected
+                            {% endif %}
+                        >{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <div class="summary-dropdown">
+                <select name="department" id="departmentDropdown" class="form-select" onchange="updateTeams()">
+                    <option value="all">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected.department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <!-- Team Dropdown -->
+            <div class="summary-dropdown">
+                <select name="team" id="teamDropdown" class="form-select" onchange="updateSessions()" {% if role == 'Department Leader' and selected.department and selected.department != user_department_id|stringformat:"s" %}disabled{% endif %}>
+                    <option value="all">All Teams</option>
+                    {% for team in teams %}
+                        <option value="{{ team.id }}" {% if selected.team == team.id|stringformat:"s" %}selected{% endif %}>{{ team.name }} ({{ team.department.name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Session Dropdown -->
+            <div class="summary-dropdown">
+                <select name="session" id="sessionDropdown" class="form-select" onchange="updateProject();" {% if role == 'Department Leader' and selected.department and selected.department != user_department_id|stringformat:"s" %}disabled{% endif %}>
+                    <option value="all">All Sessions</option>
+                    {% for session in sessions %}
+                        <option value="{{ session.id }}" {% if selected.session == session.id|stringformat:"s" %}selected{% endif %}>{{ session.name }} ({{ session.team.name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Card Dropdown -->
+            <div class="summary-dropdown">
+                <select name="card" class="form-select" onchange="updatePreview()">
+                    <option value="all" {% if not selected.card or selected.card == "all" %}selected{% endif %}>All Cards</option>
+                    {% for card in cards %}
+                        <option value="{{ card.id }}" {% if selected.card == card.id|stringformat:"s" %}selected{% endif %}>{{ card.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Time Period -->
+            <div class="summary-input">
+                <input type="text" name="time_period" id="time_period" class="form-control" placeholder="e.g., 01/01/2024-31/12/2024" onchange="updatePreview()" readonly style="background:#f7fafc;cursor:pointer;">
+            </div>
+            <button type="submit" class="summary-btn">View</button>
+        </div>
+    </form>
+
+    <div class="selection-preview-card">
+        <div class="selection-preview-title">Selection Preview</div>
+        <div class="selection-preview-content" id="selectionPreview">
+            {% if selected %}
+                <b>Department:</b> {{ selected.department|default:"All" }}<br>
+                <b>Team:</b> {{ selected.team|default:"All" }}<br>
+                <b>Session:</b> {{ selected.session|default:"All" }}<br>
+                <b>Card:</b> {{ selected.card|default:"All" }}<br>
+                <b>Time Period:</b> {{ selected.time_period|default:"-" }}
+            {% else %}
+                Nothing selected yet.
+            {% endif %}
+            <div id="projectInfo" style="margin-top:10px;">
+                {% if selected_project %}
+                    <b>Project assigned to this session:</b>
+                    <span style="color:#2774ba;">{{ selected_project.name }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if stats %}
+    <script id="stats-data" type="application/json">{{ stats_json|safe }}</script>
+    <script id="trend-stats-data" type="application/json">{{ trend_stats_json|safe }}</script>
+    <div class="stats-row">
+        <!-- Votes Column -->
+        <div class="stats-card">
+            <div class="stats-title">Voting Statistics</div>
+            <table class="stats-table">
+                <tr>
+                    <th>Vote</th>
+                    <th class="count-col">Count</th>
+                </tr>
+                {% for s in stats %}
+                <tr>
+                    <td>
+                        {% if s.vote == "green" %}
+                            <span style="color:#18b86d;"><b>Green</b></span>
+                        {% elif s.vote == "amber" %}
+                            <span style="color:#ffc400;"><b>Amber</b></span>
+                        {% elif s.vote == "red" %}
+                            <span style="color:#e14242;"><b>Red</b></span>
+                        {% else %}
+                            <span style="color:#868b98;">No Vote</span>
+                        {% endif %}
+                    </td>
+                    <td class="count-col">{{ s.count }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>Total Votes</th>
+                    <th class="count-col">{{ total_votes }}</th>
+                </tr>
+            </table>
+            <div class="chart-container">
+                <canvas id="voteBarChart" width="380" height="230"></canvas>
+            </div>
+        </div>
+        <!-- Trend Column -->
+        <div class="stats-card">
+            <div class="stats-title">Trend Statistics</div>
+            <table class="stats-table">
+                <tr>
+                    <th>Trend</th>
+                    <th class="count-col">Count</th>
+                </tr>
+                {% for t in trend_stats %}
+                <tr>
+                    <td>
+                        {% if t.trend == "improving" %}
+                            <span style="color:#18b86d;"><b>Improving</b></span>
+                        {% elif t.trend == "steady" %}
+                            <span style="color:#ffc400;"><b>About the Same</b></span>
+                        {% elif t.trend == "worsening" %}
+                            <span style="color:#e14242;"><b>Getting Worse</b></span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td class="count-col">{{ t.count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <p style="margin-bottom:18px;"><b>Overall Trend:</b>
+                {% if final_trend == "improving" %}
+                    <span style="color:#18b86d;"><b>Improving</b></span>
+                {% elif final_trend == "steady" %}
+                    <span style="color:#ffc400;"><b>About the Same</b></span>
+                {% elif final_trend == "worsening" %}
+                    <span style="color:#e14242;"><b>Getting Worse</b></span>
+                {% else %}
+                    <span style="color:#868b98;">-</span>
+                {% endif %}
+            </p>
+            <div class="chart-container">
+                <canvas id="trendBarChart" width="380" height="230"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Flatpickr Date Range Picker (for calendar) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+flatpickr("#time_period", {
+    mode: "range",
+    dateFormat: "d/m/Y",
+    allowInput: true
+});
+</script>
+
+<!-- Dynamic Dropdowns with AJAX -->
+<script>
+function updateTeams() {
+    let dept = document.getElementById('departmentDropdown').value;
+    fetch("{% url 'ajax_get_teams' %}?department_id=" + dept)
+        .then(response => response.json())
+        .then(data => {
+            let teamDropdown = document.getElementById('teamDropdown');
+            teamDropdown.innerHTML = '<option value="all">All Teams</option>';
+            data.teams.forEach(function(team) {
+                let label = team.name + " (" + team['department__name'] + ")";
+                teamDropdown.innerHTML += `<option value="${team.id}">${label}</option>`;
+            });
+            updateSessions();
+        });
+    updatePreview();
+}
+
+function updateSessions() {
+    let team = document.getElementById('teamDropdown').value;
+    let dept = document.getElementById('departmentDropdown').value;
+    fetch("{% url 'ajax_get_sessions' %}?team_id=" + team + "&department_id=" + dept)
+        .then(response => response.json())
+        .then(data => {
+            let sessionDropdown = document.getElementById('sessionDropdown');
+            sessionDropdown.innerHTML = '<option value="all">All Sessions</option>';
+            data.sessions.forEach(function(session) {
+                let label = session.name + " (" + session['team__name'] + ")";
+                sessionDropdown.innerHTML += `<option value="${session.id}">${label}</option>`;
+            });
+            updateProject();
+        });
+    updatePreview();
+}
+
+function updateProject() {
+    let session = document.getElementById('sessionDropdown').value;
+    if (session !== "all") {
+        fetch("{% url 'ajax_get_project' %}?session_id=" + session)
+            .then(response => response.json())
+            .then(data => {
+                let projectInfo = document.getElementById('projectInfo');
+                if (data.project) {
+                    projectInfo.innerHTML = `<b>Project assigned to this session:</b> <span style="color:#2774ba;">${data.project.name}</span>`;
+                } else {
+                    projectInfo.innerHTML = "";
+                }
+            });
+    } else {
+        document.getElementById('projectInfo').innerHTML = "";
+    }
+    updatePreview();
+}
+
+function updatePreview() {
+    let dept = document.getElementById('departmentDropdown').selectedOptions[0].text;
+    let team = document.getElementById('teamDropdown').selectedOptions[0].text;
+    let session = document.getElementById('sessionDropdown').selectedOptions[0].text;
+    let card = document.querySelector('select[name="card"]').selectedOptions[0].text;
+    let timePeriod = document.getElementById('time_period').value;
+    let html = `<b>Department:</b> ${dept}<br>
+                <b>Team:</b> ${team}<br>
+                <b>Session:</b> ${session}<br>
+                <b>Card:</b> ${card}<br>
+                <b>Time Period:</b> ${timePeriod || '-'}`;
+    document.getElementById("selectionPreview").innerHTML = html + document.getElementById('projectInfo').outerHTML;
+}
+</script>
+
+{% if stats %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Vote Bar Chart
+    if (document.getElementById('voteBarChart') && document.getElementById('stats-data')) {
+        const statsData = JSON.parse(document.getElementById('stats-data').textContent);
+        const voteLabels = statsData.map(s => {
+            if (s.vote === "green") return "Green";
+            if (s.vote === "amber") return "Amber";
+            if (s.vote === "red") return "Red";
+            return "No Vote";
+        });
+        const voteCounts = statsData.map(s => s.count);
+        const voteColors = voteLabels.map(label => {
+            if (label === "Green") return "#18b86d";
+            if (label === "Amber") return "#ffc400";
+            if (label === "Red") return "#e14242";
+            return "#868b98";
+        });
+        const voteBarCtx = document.getElementById('voteBarChart').getContext('2d');
+        new Chart(voteBarCtx, {
+            type: 'bar',
+            data: {
+                labels: voteLabels,
+                datasets: [{
+                    label: 'Votes',
+                    data: voteCounts,
+                    backgroundColor: voteColors,
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        ticks: { font: { size: 13 }, maxRotation: 0, minRotation: 0 }
+                    },
+                    y: {
+                        beginAtZero: true, stepSize: 1, ticks: { font: { size: 16 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Trend Bar Chart
+    if (document.getElementById('trendBarChart') && document.getElementById('trend-stats-data')) {
+        const trendData = JSON.parse(document.getElementById('trend-stats-data').textContent);
+        // Guarantee all 3 categories appear, even if 0
+        const trendMap = { "improving": 0, "steady": 0, "worsening": 0 };
+        trendData.forEach(t => { trendMap[t.trend] = t.count; });
+        const trendLabels = ["Improving", "About the Same", "Getting Worse"];
+        const trendCounts = [
+            trendMap.improving || 0,
+            trendMap.steady || 0,
+            trendMap.worsening || 0
+        ];
+        const trendColors = [
+            "#18b86d", "#ffc400", "#e14242"
+        ];
+        const trendBarCtx = document.getElementById('trendBarChart').getContext('2d');
+        new Chart(trendBarCtx, {
+            type: 'bar',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Trend Count',
+                    data: trendCounts,
+                    backgroundColor: trendColors,
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        ticks: { font: { size: 13 }, maxRotation: 0, minRotation: 0 }
+                    },
+                    y: {
+                        beginAtZero: true, stepSize: 1, ticks: { font: { size: 16 } }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+<script>
+function onDepartmentChange() {
+    var deptDropdown = document.getElementById('departmentDropdown');
+    var teamDropdown = document.getElementById('teamDropdown');
+    var sessionDropdown = document.getElementById('sessionDropdown');
+    var selectedDept = deptDropdown.value;
+    var userDept = "{{ user_department_id }}";  // passed from context
+
+    if (selectedDept !== userDept) {
+        teamDropdown.value = "all";
+        teamDropdown.disabled = true;
+        sessionDropdown.value = "all";
+        sessionDropdown.disabled = true;
+    } else {
+        teamDropdown.disabled = false;
+        sessionDropdown.disabled = false;
+    }
+    updatePreview();
+}
+</script>
+{% endif %}
+{% endblock %}
