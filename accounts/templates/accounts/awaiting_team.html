@@ -1,0 +1,32 @@
+{% extends 'accounts/base.html' %} {% block title %}Team Assignment Pending |
+Health Check{% endblock %} {% block extra_style %} .awaiting-container {
+max-width: 600px; margin: 100px auto; padding: 40px; background: #fff;
+border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align:
+center; } .awaiting-icon { font-size: 3.5em; color: #1a76d2; margin-bottom:
+20px; } .awaiting-title { font-size: 1.8em; color: #1465a2; margin-bottom: 20px;
+font-weight: 700; } .awaiting-message { font-size: 1.15em; line-height: 1.6;
+color: #445; margin-bottom: 25px; } .awaiting-contact { background: #f0f8ff;
+padding: 15px 20px; border-radius: 8px; display: inline-block; margin-top: 15px;
+} .dashboard-btn { display: inline-block; padding: 12px 25px; background:
+linear-gradient(90deg,#1a76d2 70%,#2186eb 100%); color: #fff; border-radius:
+8px; font-weight: 600; text-decoration: none; margin-top: 20px; transition:
+background 0.2s; } .dashboard-btn:hover { background: #289ff3; } {% endblock %}
+{% block content %}
+<div class="awaiting-container">
+  <div class="awaiting-icon">⏳</div>
+  <h1 class="awaiting-title">Team Assignment Pending</h1>
+  <p class="awaiting-message">
+    Your account has been created successfully, but you haven't been assigned to
+    a team yet. You need to be assigned to a team before you can access the
+    summary visualizations.
+  </p>
+  <p class="awaiting-message">
+    An administrator will assign you to a team and role shortly.
+  </p>
+  <div class="awaiting-contact">
+    If you believe this is an error or have any questions, please contact your
+    administrator.
+  </div>
+  <a href="/" class="dashboard-btn">Back to Dashboard</a>
+</div>
+{% endblock %}

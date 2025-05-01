@@ -1,0 +1,163 @@
+{% extends 'accounts/base.html' %} {% block title %}Summary Guide | Health
+Check{% endblock %} {% block extra_style %} .guide-container { max-width: 900px;
+margin: 50px auto; padding: 30px 40px; background: #fff; border-radius: 12px;
+box-shadow: 0 5px 20px rgba(0,0,0,0.05); } .guide-title { text-align: center;
+font-size: 2.2em; color: #1465a2; margin-bottom: 30px; font-weight: 700; }
+.guide-section { margin-bottom: 30px; } .guide-section-title { font-size: 1.5em;
+color: #2774ba; margin-bottom: 15px; font-weight: 600; } .guide-text {
+font-size: 1.1em; line-height: 1.6; color: #445; margin-bottom: 15px; }
+.guide-list { margin-left: 20px; margin-bottom: 20px; } .guide-list li {
+margin-bottom: 10px; font-size: 1.05em; line-height: 1.5; color: #445; }
+.guide-highlight { background: #f0f8ff; padding: 15px 20px; border-radius: 8px;
+border-left: 4px solid #1a76d2; margin: 20px 0; } .guide-back-btn { display:
+inline-block; padding: 12px 25px; background: linear-gradient(90deg,#1a76d2
+70%,#2186eb 100%); color: #fff; border-radius: 8px; font-weight: 600;
+text-decoration: none; margin-top: 20px; transition: background 0.2s; }
+.guide-back-btn:hover { background: #289ff3; } {% endblock %} {% block content
+%}
+<div class="guide-container">
+  <h1 class="guide-title">Summary Selection Guide</h1>
+
+  <div class="guide-section">
+    <h2 class="guide-section-title">Overview</h2>
+    <p class="guide-text">
+      The Summary Selection panel allows you to visualize the health check votes
+      and trends across teams, departments, sessions, and health cards. The
+      visualization capabilities vary based on your role in the organization.
+    </p>
+  </div>
+
+  <div class="guide-section">
+    <h2 class="guide-section-title">Using Filters</h2>
+    <p class="guide-text">
+      You can filter the data using the following options:
+    </p>
+    <ul class="guide-list">
+      <li>
+        <strong>Department:</strong> Select a specific department or view all
+        departments (Senior Managers only)
+      </li>
+      <li>
+        <strong>Team:</strong> Select a specific team within the selected
+        department
+      </li>
+      <li>
+        <strong>Session:</strong> Select a specific session to analyze votes
+        from that session only
+      </li>
+      <li>
+        <strong>Card:</strong> Select a specific health card to focus on one
+        aspect
+      </li>
+      <li>
+        <strong>Time Period:</strong> Select a date range to see how votes have
+        changed over time
+      </li>
+    </ul>
+
+    <div class="guide-highlight">
+      <p>
+        <strong>Note:</strong> The filters available to you depend on your role:
+      </p>
+      <ul style="margin-top: 10px; margin-bottom: 0">
+        <li>
+          <strong>Team Leaders:</strong> Can only view teams in their department
+        </li>
+        <li>
+          <strong>Department Leaders:</strong> Can view summaries of all teams
+          in their department and summary-level information about other
+          departments
+        </li>
+        <li>
+          <strong>Senior Managers:</strong> Have full access to view all
+          departments and teams
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="guide-section">
+    <h2 class="guide-section-title">Understanding the Visualizations</h2>
+    <p class="guide-text">
+      The summary panel presents two main visualizations:
+    </p>
+
+    <h3
+      style="
+        color: #3784c7;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 1.25em;
+      "
+    >
+      1. Voting Statistics
+    </h3>
+    <p class="guide-text">
+      This shows the distribution of votes (Green, Amber, Red) based on your
+      selected filters. The bar chart provides a visual representation of the
+      vote counts.
+    </p>
+    <ul class="guide-list">
+      <li>
+        <span style="color: #18b86d"><strong>Green:</strong></span> Good health,
+        no issues
+      </li>
+      <li>
+        <span style="color: #ffc400"><strong>Amber:</strong></span> Some
+        concerns, needs attention
+      </li>
+      <li>
+        <span style="color: #e14242"><strong>Red:</strong></span> Critical
+        issues requiring immediate action
+      </li>
+    </ul>
+
+    <h3
+      style="
+        color: #3784c7;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 1.25em;
+      "
+    >
+      2. Trend Statistics
+    </h3>
+    <p class="guide-text">
+      This shows how team members perceive the trend of the selected card(s) or
+      session(s). The overall trend is calculated based on the majority opinion.
+    </p>
+    <ul class="guide-list">
+      <li>
+        <span style="color: #18b86d"><strong>Improving:</strong></span>
+        Situation is getting better
+      </li>
+      <li>
+        <span style="color: #ffc400"><strong>About the Same:</strong></span> No
+        significant change
+      </li>
+      <li>
+        <span style="color: #e14242"><strong>Getting Worse:</strong></span>
+        Situation is deteriorating
+      </li>
+    </ul>
+  </div>
+
+  <div class="guide-section">
+    <h2 class="guide-section-title">Tips for Effective Analysis</h2>
+    <ul class="guide-list">
+      <li>
+        Start with a broad view (all teams, all cards) to identify general
+        patterns
+      </li>
+      <li>
+        Drill down into specific teams or cards showing concerning patterns
+      </li>
+      <li>Use the time period filter to track progress over time</li>
+      <li>Compare trends across different teams to identify best practices</li>
+      <li>Look for correlations between different health cards</li>
+    </ul>
+  </div>
+
+  <a href="{% url 'summary_view' %}" class="guide-back-btn">Back to Summary</a>
+</div>
+{% endblock %}
